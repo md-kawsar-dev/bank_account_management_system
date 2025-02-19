@@ -64,7 +64,7 @@ vector<Record> readCSV(const string& filename) {
     return records;
 }
 // Function add withdraw history in a csv file
-void bank_history(int id,double amount,string type) {
+void bank_history(int id,double amount,string type,string remarks="") {
     ofstream file("history.csv", ios::app);
     if(!file)
     {
@@ -73,7 +73,7 @@ void bank_history(int id,double amount,string type) {
         // date and time
         time_t now = time(0);
         char* dt = ctime(&now);
-        file << id << "," << amount << "," << type << "," << dt;    
+        file << id << "," << amount << "," << type << ","<<remarks<<","<< dt;    
         file.close();
     }
     file.close();
@@ -192,6 +192,64 @@ bool transferBalance(const string& filename, int fromId, int toId, double amount
     }
     
 }
+bool paymentBalance(const string& filename, int id, double amount,string bill_type) {
+    vector<Record> records = readCSV(filename);
+    bool found = false;
+
+    for (auto& record : records) {
+        if (record.id == id && record.balance >= amount && amount>0) {
+            record.balance -= amount;
+            bank_history(id,amount,"payment",bill_type);
+            found = true;
+            break;
+        }
+    }
+
+    if (found) {
+        writeCSV(filename, records);
+        return true;
+    }else{
+        return false;
+    }
+}
+bool updateRecord(const string& filename, const Record& updatedRecord) {
+    vector<Record> records = readCSV(filename);
+    bool found = false;
+    for (auto& record : records) {
+        if (record.id == updatedRecord.id) {
+            if(updatedRecord.name!="") record.name = updatedRecord.name;
+            if(updatedRecord.pin!=0) record.pin = updatedRecord.pin;
+            if(updatedRecord.pass!="") record.pass = updatedRecord.pass;
+            if(updatedRecord.address!="") record.address = updatedRecord.address;
+            if(updatedRecord.phone!="") record.phone = updatedRecord.phone;
+            found = true;
+            break;
+        }
+    }
+
+    if (found) {
+        writeCSV(filename, records);
+        return true;
+    } else {
+        return false;
+    }
+}
+bool deleteRecord(const string& filename, const int id) {
+    vector<Record> records = readCSV(filename);
+    vector<Record> filteredRecords;
+    for (const auto& record : records) {
+        if (record.id != id) {
+            filteredRecords.push_back(record);
+        }
+    }
+
+    if (records.size() != filteredRecords.size()) {
+        writeCSV(filename, filteredRecords);
+        return true;
+    } else {
+        return false;
+    }
+}
 class Bank
 {
     private:
@@ -208,6 +266,10 @@ class Bank
         void deposit();
         void withdraw();
         void transfer();
+        void payment();
+        void search();
+        void edit();
+        void delete_user();
 
 };
 void Bank::menu()
@@ -307,12 +369,16 @@ void Bank::bank_management()
             transfer();
             break;
         case 6:
+            payment();
             break;
         case 7:
+            search();
             break;
         case 8:
+            edit();
             break;
         case 9:
+            delete_user();
             break;
         case 10:
             break;
@@ -540,6 +606,186 @@ void Bank::transfer()
                 cout << "\n\nTransfer failed from ID " << from_id << " to ID " << to_id << "!";
                 getch();
                 goto p;
+            }
+        }
+    }
+}
+void Bank::payment()
+{
+    // payment by user id and amount bill type
+    // payment history
+    // payment history by user id
+    p:
+        int user_id;
+        string bill_type;
+        double amount;
+        system("cls");
+        cout<<"\n\n\t\t\tBills Payment Option";
+        cout<<"\n\n Enter User ID : ";
+        cin>>user_id;
+        cout<<"\n\n Enter Bill Type : ";
+        cin>>bill_type;
+        cout<<"\n\n Enter Amount : ";
+        cin>>amount;
+        vector<Record> records = readCSV(fileName);
+        if (!recordExists(user_id, records)) {
+            cout<<"\n\n\t\tRecord with ID " << user_id << " not found.";
+            getch();
+            goto p;
+        }
+        else
+        {
+            if(paymentBalance(fileName,user_id,amount,bill_type))
+            {
+                cout << "\n\n\t\t"<<bill_type<<" Bill Pay Successfully!!!...";
+            }else{
+                cout << "\n\n\t\t"<<bill_type <<" Bill failed from ID " << user_id << "!";
+                getch();
+                goto p;
+            }
+        }
+
+}
+void Bank::search()
+{
+    p:
+    system("cls");
+    cout<<"\n\n\t\t\tSearch User Record";
+    if(!isFileOpen(fileName))
+    {
+        cout<<"\n\n File Not Found...";
+    }else{
+        int a_id;
+        cout<<"\n\n Enter User ID : ";
+        cin>>a_id;
+        vector<Record> records = readCSV(fileName);
+        if (!recordExists(a_id, records)) {
+            cout<<"\n\n\t\t User not found with ID " << a_id;
+            getch();
+            goto p;
+        }else{
+            allInfoByID(fileName,a_id);
+        }
+    }
+}
+void Bank::edit()
+{
+    p:
+        system("cls");
+        cout<<"\n\n\t\t\tEdit User Record";
+        if(!isFileOpen(fileName))
+        {
+            cout<<"\n\n\t\t File Not Found...";
+        }else{
+            int a_id;
+            cout<<"\n\n Enter User ID : ";
+            cin>>a_id;
+            vector<Record> records = readCSV(fileName);
+            if (!recordExists(a_id, records)) {
+                cout<<"\n\n\t\t User not found with ID " << a_id;
+                getch();
+                goto p;
+            }else{
+                system("cls");
+                allInfoByID(fileName,a_id);
+                cout<<"\n\n\t\t Enter New Record";
+                int choice;
+                cout<<"\n\n 1. Name";
+                cout<<"\n 2. Address";
+                cout<<"\n 3. Pin";
+                cout<<"\n 4. Password";
+                cout<<"\n 5. Phone";
+                cout<<"\n 6. Go Back";
+                cout<<"\n\n Enter Your Choice : ";
+                cin>>choice;
+                int new_pin=0;
+                string new_name="",new_pass="",new_address="",new_phone="";
+                switch(choice)
+                {
+                    case 1:
+                        cout<<"\n\n\t\t Enter New Name : ";
+                        cin.ignore();
+                        getline (cin, new_name);
+                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                        {
+                            cout<<"\n\n\t\t Name Updated Successfully...";
+                        }else{
+                            cout<<"\n\n\t\t Name Updated Failed...";
+                        }
+                        break;
+                    case 2:
+                        cout<<"\n\n\t\t Enter New Address : ";
+                        cin.ignore();
+                        getline (cin, new_address);
+                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                        {
+                            cout<<"\n\n\t\t Address Updated Successfully...";
+                        }else{
+                            cout<<"\n\n\t\t Address Updated Failed...";
+                        }
+                        break;
+                    case 3:
+                        cout<<"\n\n\t\t Enter New Pin : ";
+                        cin>>new_pin;
+                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                        {
+                            cout<<"\n\n\t\t PIN Updated Successfully...";
+                        }else{
+                            cout<<"\n\n\t\t PIN Updated Failed...";
+                        }
+                        break;
+                    case 4:
+                        cout<<"\n\n\t\t Enter New Password : ";
+                        cin>>new_pass;
+                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                        {
+                            cout<<"\n\n\t\t Password Updated Successfully...";
+                        }else{
+                            cout<<"\n\n\t\t Password Updated Failed...";
+                        }
+                        break;
+                    case 5:
+                        cout<<"\n\n\t\t Enter New Phone : ";
+                        cin>>new_phone;
+                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                        {
+                            cout<<"\n\n\t\t Phone Updated Successfully...";
+                        }else{
+                            cout<<"\n\n\t\t Phone Updated Failed...";
+                        }
+                        break;
+                    case 6:
+                        bank_management();
+                        break;
+                    default:
+                        cout<<"\n\n\t\t Invalid Value...Please Try Again";
+                }
+            }
+        }
+}
+void Bank::delete_user()
+{
+    p:
+    system("cls");
+    cout<<"\n\n\t\t\tDelete User Record";
+    if(!isFileOpen(fileName))
+    {
+        cout<<"\n\n\t\t File Not Found...";
+    }else{
+        int a_id;
+        cout<<"\n\n Enter User ID : ";
+        cin>>a_id;
+        vector<Record> records = readCSV(fileName);
+        if (!recordExists(a_id, records)) {
+            cout<<"\n\n\t\t User not found with ID " << a_id;
+            getch();
+            goto p;
+        }else{
+            if(deleteRecord(fileName,a_id))
+            {
+                cout<<"\n\n\t\t User Deleted Successfully...";
+            }else{
+                cout<<"\n\n\t\t User Deleted Failed...";
             }
         }
     }
