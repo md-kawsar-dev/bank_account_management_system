@@ -4,6 +4,8 @@
 #include <vector>
 #include <conio.h>
 #include <windows.h>
+#include <ctime>
+#include <string>
 
 using namespace std;
 struct Record {
