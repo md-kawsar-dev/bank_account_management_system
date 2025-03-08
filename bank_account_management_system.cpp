@@ -2,12 +2,26 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <conio.h>
-#include <windows.h>
+//#include <conio.h>
+//#include <windows.h>
 #include <ctime>
 #include <string>
+#include <unistd.h>
+#include <termios.h>
 
 using namespace std;
+// char getch(void) {
+//     struct termios oldt, newt;
+//     char ch;
+//     tcgetattr(STDIN_FILENO, &oldt);
+//     newt = oldt;
+//     newt.c_lflag &= ~(ICANON | ECHO);  // Disable buffering and echo
+//     tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+//     ch = getchar();
+//     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);  // Restore terminal settings
+//     return ch;
+// }
+
 struct Record {
     int id;
     string name;
@@ -33,9 +47,9 @@ bool recordExists(const int& id, const vector<Record>& records) {
 vector<Record> readCSV(const string& filename) {
     vector<Record> records;
     ifstream file(filename,ios::out);
-    
+
     string line;
-    while (getline(file, line)) 
+    while (getline(file, line))
     {
         if (line.find("ID") != string::npos || line.find("Name") != string::npos) {
             continue;
@@ -73,7 +87,7 @@ void bank_history(int id,double amount,string type,string remarks="") {
         // date and time
         time_t now = time(0);
         char* dt = ctime(&now);
-        file << id << "," << amount << "," << type << ","<<remarks<<","<< dt;    
+        file << id << "," << amount << "," << type << ","<<remarks<<","<< dt;
         file.close();
     }
     file.close();
@@ -107,7 +121,6 @@ void allInfoByID(const string& filename,const int id)
     }
     if(found)cout<<"ID :"<<record.id <<"  Name :"<<record.name<<"  Pin :"<<record.pin<<"  Password :"<<record.pass<<"  Address :"<<record.address<<"  Phone :"<<record.phone<<"   Balance :"<<record.balance<<endl;
     if(!found)cout << "Record with ID " << id << " not found." << endl;
-
 
 }
 // Function to add a new record
@@ -190,7 +203,7 @@ bool transferBalance(const string& filename, int fromId, int toId, double amount
     else{
         return false;
     }
-    
+
 }
 bool paymentBalance(const string& filename, int id, double amount,string bill_type) {
     vector<Record> records = readCSV(filename);
@@ -259,7 +272,7 @@ class Bank
 
     public:
         void menu();
-        void bank_management();
+        void bank_management(int cal_fun=0);
         void atm_management();
         void new_user();
         void already_user();
@@ -274,10 +287,10 @@ class Bank
 };
 void Bank::menu()
 {
-    p:
-    system("cls");
+    system("clear");
     int choice;
     char ch;
+    bool flag = true;
     string email,pin,pass;
     cout<<"\n\n\t\t\tControl Panel";
     cout<<"\n\n 1. Bank Management";
@@ -285,57 +298,67 @@ void Bank::menu()
     cout<<"\n 3. Exit";
     cout<<"\n\n Enter Your Choice : ";
     cin>>choice;
-    switch(choice)
+    while (flag)
     {
-        case 1:
-            system("cls");
-            /*
-            cout<<"\n\n\t\t\tLogin Account";
-            cout<<"\n\n E-mail : ";
-            cin>>email;
-            cout<<"\n\n\t\t Pin Code : ";
-            for(int i=1;i<=5;i++)
-            {
-                ch = getch();
-                pin +=ch;
-                cout<<"*";
-            }
-            cout<<"\n\n Password : ";
-            for(int i=1;i<=5;i++)
-            {
-                ch = getch();
-                pass +=ch;
-                cout<<"*";
-            }
-            if(email =="admin@gmail.com" && pin=="12345" && pass=="54321")
-            {
+        
+        switch(choice)
+        {
+            case 1:
+                system("clear");
+                /*
+                cout<<"\n\n\t\t\tLogin Account";
+                cout<<"\n\n E-mail : ";
+                cin>>email;
+                cout<<"\n\n\t\t Pin Code : ";
+                for(int i=1;i<=5;i++)
+                {
+                    ch = getch();
+                    pin +=ch;
+                    cout<<"*";
+                }
+                cout<<"\n\n Password : ";
+                for(int i=1;i<=5;i++)
+                {
+                    ch = getch();
+                    pass +=ch;
+                    cout<<"*";
+                }
+                if(email =="admin@gmail.com" && pin=="12345" && pass=="54321")
+                {
+                    bank_management();
+                }
+                else
+                {
+                    cout<<"\n\n Your E-mail, Pin & Password is wrong...";
+                }
+                */
                 bank_management();
-            }
-            else
-            {
-                cout<<"\n\n Your E-mail, Pin & Password is wrong...";
-            }
-            */
-            bank_management();
-            break;
-        case 2:
-            atm_management();
-            break;
-        case 3:
-            exit(0);
-            break;
-        default:
-            cout<<"\n\n Invalid Value...Please Try Again";
+                break;
+            case 2:
+                atm_management();
+                break;
+            case 3:
+                flag = false;
+                cout<<"\n\n\t\t Thank You... \n\n";
+                exit(0);
+                break;
+            default:
+                cout<<"\n\n Invalid Value...Please Try Again";
+        }
     }
-    getch();
-    goto p;
+   
+    
 }
 
-void Bank::bank_management()
+void Bank::bank_management(int cal_fun)
 {
-    p:
-    system("cls");
+   
+    if(cal_fun==0)
+    {
+        system("clear");
+    }
     int choice;
+    bool flag = true;
     cout<<"\n\n\t\t\tBank Management System";
     cout<<"\n\n 1. New User";
     cout<<"\n 2. Already User";
@@ -351,52 +374,56 @@ void Bank::bank_management()
     cout<<"\n 12. Go Back";
     cout<<"\n\n Enter Your Choice : ";
     cin>>choice;
-    switch(choice)
+    while (flag)
     {
-        case 1:
-            new_user();
-            break;
-        case 2:
-            already_user();
-            break;
-        case 3:
-            deposit();
-            break;
-        case 4:
-            withdraw();
-            break;
-        case 5:
-            transfer();
-            break;
-        case 6:
-            payment();
-            break;
-        case 7:
-            search();
-            break;
-        case 8:
-            edit();
-            break;
-        case 9:
-            delete_user();
-            break;
-        case 10:
-            break;
-        case 11:
-            break;
-        case 12:
-            menu();
-            break;
-        default:
-            cout<<"\n\n Invalid Value...Please Try Again";
+        switch(choice)
+        {
+            case 1:
+                new_user();
+                break;
+            case 2:
+                already_user();
+                break;
+            case 3:
+                deposit();
+                break;
+            case 4:
+                withdraw();
+                break;
+            case 5:
+                transfer();
+                break;
+            case 6:
+                payment();
+                break;
+            case 7:
+                search();
+                break;
+            case 8:
+                edit();
+                break;
+            case 9:
+                delete_user();
+                break;
+            case 10:
+                break;
+            case 11:
+                break;
+            case 12:
+                flag = false;
+                menu();
+                break;
+            default:
+                cout<<"\n\n Invalid Value...Please Try Again";
+        }
     }
-    getch();
-    goto p;
+    
+    
 }
 void Bank::atm_management()
 {
     p:
-    system("cls");
+    system("clear");
     int choice;
     cout<<"\n\n\t\t\tATM Management System";
     cout<<"\n\n 1. User Login & Check Balance";
@@ -419,13 +446,16 @@ void Bank::atm_management()
         default:
             cout<<"\n\n Invalid Value...Please Try Again";
     }
-    getch();
-    goto p;
+    // getch();
+    // goto p;
+    char c;
+    cin.get(c);
+    if(c == '\n')goto p;
 }
 void Bank::new_user()
 {
-    p:
-    system("cls");
+    
+    system("clear");
     cout<<"\n\n\t\t\tAdd New User";
     cout<<"\n\n User ID : ";
     cin>>id;
@@ -447,8 +477,7 @@ void Bank::new_user()
     Record newRecord = {id,name,pin,pass,address, phone, balance};
     if (recordExists(newRecord.id, records)) {
         cout<<"\n\n User ID Already Exist...";
-        getch();
-        goto p;
+        new_user();
     }
     else
     {
@@ -459,6 +488,8 @@ void Bank::new_user()
             file.close();
         }
         addRecord(fileName,newRecord);
+        bank_management();
+
     }
     /*
     file.open("bank.csv",ios::in);
@@ -491,33 +522,33 @@ void Bank::new_user()
 
 }
 void Bank::already_user()
-{
-    p:
-    system("cls");
-    cout<<"\n\n\t\t\tAlready User";
-    if(!isFileOpen(fileName))
-    {
-        cout<<"\n\n File Not Found...";
+{ 
+        system("clear");
+        cout<<"\n\n\t\t\tAlready User";
+        if(!isFileOpen(fileName))
+        {
+            cout<<"\n\n File Not Found...";
+            already_user();
 
-    }else{
-        int a_id;
-        cout<<"\n\n Enter User ID : ";
-        cin>>a_id;
-        vector<Record> records = readCSV(fileName);
-        if (!recordExists(a_id, records)) {
-            cout<<"\n\n Record with ID " << a_id << " not found.";
-            getch();
-            goto p;
         }else{
-            // readCSV(fileName);
-            allInfoByID(fileName,a_id);
+            int a_id;
+            cout<<"\n\n Enter User ID : ";
+            cin>>a_id;
+            vector<Record> records = readCSV(fileName);
+            if (!recordExists(a_id, records)) {
+                cout<<"\n\n Record with ID " << a_id << " not found.";
+                already_user();
+            }else{
+                
+                allInfoByID(fileName,a_id);
+                bank_management(1);
+            }
         }
-    }
+        // Sleep(3000);
 }
 void Bank::deposit()
 {
-    p:
-    system("cls");
+    system("clear");
     cout<<"\n\n\t\t\tDeposit Amount";
     if(!isFileOpen(fileName))
     {
@@ -531,23 +562,25 @@ void Bank::deposit()
         vector<Record> records = readCSV(fileName);
         if (!recordExists(a_id, records)) {
             cout<<"\n\n Record with ID " << a_id << " not found.";
-            getch();
-            goto p;
+            deposit();
         }else{
             cout<<"\n\n Enter Deposit Amount : ";
             cin>>amount;
             addBalance(fileName,a_id,amount);
+            // go to bank management
+            bank_management(1);
         }
     }
 }
 void Bank::withdraw()
 {
-    p:
-    system("cls");
+   
+    system("clear");
     cout<<"\n\n\t\t\tWithdraw Amount";
     if(!isFileOpen(fileName))
     {
         cout<<"\n\n File Not Found...";
+        bank_management();
     }else{
         int a_id;
         double amount;
@@ -556,30 +589,29 @@ void Bank::withdraw()
         vector<Record> records = readCSV(fileName);
         if (!recordExists(a_id, records)) {
             cout<<"\n\n Record with ID " << a_id << " not found.";
-            getch();
-            goto p;
+            withdraw();
         }else{
             cout<<"\n\n Enter Withdraw Amount : ";
             cin>>amount;
             if(withdrawBalance(fileName,a_id,amount))
             {
                 cout << "\n\nWithdraw successfully to ID " << a_id << "!";
+                bank_management(1);
             }else{
                 cout << "\n\nWithdraw failed to ID " << a_id << "!";
-                getch();
-                goto p;
+                withdraw();
             }
         }
     }
 }
 void Bank::transfer()
 {
-    p:
-    system("cls");
+    system("clear");
     cout<<"\n\n\t\t\tTransfer Amount";
     if(!isFileOpen(fileName))
     {
         cout<<"\n\n File Not Found...";
+        transfer();
     }else{
         int from_id,to_id;
         double amount;
@@ -590,22 +622,20 @@ void Bank::transfer()
         vector<Record> records = readCSV(fileName);
         if (!recordExists(from_id, records)) {
             cout<<"\n\n Record with ID " << from_id << " not found.";
-            getch();
-            goto p;
+            transfer();
         }else if (!recordExists(to_id, records)) {
             cout<<"\n\n Record with ID " << to_id << " not found.";
-            getch();
-            goto p;
+            transfer();
         }else{
             cout<<"\n\n Enter Transfer Amount : ";
             cin>>amount;
             if(transferBalance(fileName,from_id,to_id,amount))
             {
                 cout << "\n\nTransfer successfully from ID " << from_id << " to ID " << to_id << "!";
+                bank_management(1);
             }else{
                 cout << "\n\nTransfer failed from ID " << from_id << " to ID " << to_id << "!";
-                getch();
-                goto p;
+                transfer();
             }
         }
     }
@@ -615,45 +645,43 @@ void Bank::payment()
     // payment by user id and amount bill type
     // payment history
     // payment history by user id
-    p:
-        int user_id;
-        string bill_type;
-        double amount;
-        system("cls");
-        cout<<"\n\n\t\t\tBills Payment Option";
-        cout<<"\n\n Enter User ID : ";
-        cin>>user_id;
-        cout<<"\n\n Enter Bill Type : ";
-        cin>>bill_type;
-        cout<<"\n\n Enter Amount : ";
-        cin>>amount;
-        vector<Record> records = readCSV(fileName);
-        if (!recordExists(user_id, records)) {
-            cout<<"\n\n\t\tRecord with ID " << user_id << " not found.";
-            getch();
-            goto p;
-        }
-        else
+    int user_id;
+    string bill_type;
+    double amount;
+    system("clear");
+    cout<<"\n\n\t\t\tBills Payment Option";
+    cout<<"\n\n Enter User ID : ";
+    cin>>user_id;
+    cout<<"\n\n Enter Bill Type : ";
+    cin>>bill_type;
+    cout<<"\n\n Enter Amount : ";
+    cin>>amount;
+    vector<Record> records = readCSV(fileName);
+    if (!recordExists(user_id, records)) {
+        cout<<"\n\n\t\tRecord with ID " << user_id << " not found.";
+        payment();
+    }
+    else
+    {
+        if(paymentBalance(fileName,user_id,amount,bill_type))
         {
-            if(paymentBalance(fileName,user_id,amount,bill_type))
-            {
-                cout << "\n\n\t\t"<<bill_type<<" Bill Pay Successfully!!!...";
-            }else{
-                cout << "\n\n\t\t"<<bill_type <<" Bill failed from ID " << user_id << "!";
-                getch();
-                goto p;
-            }
+            cout << "\n\n\t\t"<<bill_type<<" Bill Pay Successfully!!!...";
+            bank_management(1);
+        }else{
+            cout << "\n\n\t\t"<<bill_type <<" Bill failed from ID " << user_id << "!";
+            payment();
         }
+    }
 
 }
 void Bank::search()
 {
-    p:
-    system("cls");
+    system("clear");
     cout<<"\n\n\t\t\tSearch User Record";
     if(!isFileOpen(fileName))
     {
         cout<<"\n\n File Not Found...";
+        search();
     }else{
         int a_id;
         cout<<"\n\n Enter User ID : ";
@@ -661,116 +689,21 @@ void Bank::search()
         vector<Record> records = readCSV(fileName);
         if (!recordExists(a_id, records)) {
             cout<<"\n\n\t\t User not found with ID " << a_id;
-            getch();
-            goto p;
+            search();
         }else{
             allInfoByID(fileName,a_id);
+            bank_management(1);
         }
     }
 }
 void Bank::edit()
 {
-    p:
-        system("cls");
-        cout<<"\n\n\t\t\tEdit User Record";
-        if(!isFileOpen(fileName))
-        {
-            cout<<"\n\n\t\t File Not Found...";
-        }else{
-            int a_id;
-            cout<<"\n\n Enter User ID : ";
-            cin>>a_id;
-            vector<Record> records = readCSV(fileName);
-            if (!recordExists(a_id, records)) {
-                cout<<"\n\n\t\t User not found with ID " << a_id;
-                getch();
-                goto p;
-            }else{
-                system("cls");
-                allInfoByID(fileName,a_id);
-                cout<<"\n\n\t\t Enter New Record";
-                int choice;
-                cout<<"\n\n 1. Name";
-                cout<<"\n 2. Address";
-                cout<<"\n 3. Pin";
-                cout<<"\n 4. Password";
-                cout<<"\n 5. Phone";
-                cout<<"\n 6. Go Back";
-                cout<<"\n\n Enter Your Choice : ";
-                cin>>choice;
-                int new_pin=0;
-                string new_name="",new_pass="",new_address="",new_phone="";
-                switch(choice)
-                {
-                    case 1:
-                        cout<<"\n\n\t\t Enter New Name : ";
-                        cin.ignore();
-                        getline (cin, new_name);
-                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
-                        {
-                            cout<<"\n\n\t\t Name Updated Successfully...";
-                        }else{
-                            cout<<"\n\n\t\t Name Updated Failed...";
-                        }
-                        break;
-                    case 2:
-                        cout<<"\n\n\t\t Enter New Address : ";
-                        cin.ignore();
-                        getline (cin, new_address);
-                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
-                        {
-                            cout<<"\n\n\t\t Address Updated Successfully...";
-                        }else{
-                            cout<<"\n\n\t\t Address Updated Failed...";
-                        }
-                        break;
-                    case 3:
-                        cout<<"\n\n\t\t Enter New Pin : ";
-                        cin>>new_pin;
-                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
-                        {
-                            cout<<"\n\n\t\t PIN Updated Successfully...";
-                        }else{
-                            cout<<"\n\n\t\t PIN Updated Failed...";
-                        }
-                        break;
-                    case 4:
-                        cout<<"\n\n\t\t Enter New Password : ";
-                        cin>>new_pass;
-                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
-                        {
-                            cout<<"\n\n\t\t Password Updated Successfully...";
-                        }else{
-                            cout<<"\n\n\t\t Password Updated Failed...";
-                        }
-                        break;
-                    case 5:
-                        cout<<"\n\n\t\t Enter New Phone : ";
-                        cin>>new_phone;
-                        if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
-                        {
-                            cout<<"\n\n\t\t Phone Updated Successfully...";
-                        }else{
-                            cout<<"\n\n\t\t Phone Updated Failed...";
-                        }
-                        break;
-                    case 6:
-                        bank_management();
-                        break;
-                    default:
-                        cout<<"\n\n\t\t Invalid Value...Please Try Again";
-                }
-            }
-        }
-}
-void Bank::delete_user()
-{
-    p:
-    system("cls");
-    cout<<"\n\n\t\t\tDelete User Record";
+    system("clear");
+    cout<<"\n\n\t\t\tEdit User Record";
     if(!isFileOpen(fileName))
     {
         cout<<"\n\n\t\t File Not Found...";
+        edit();
     }else{
         int a_id;
         cout<<"\n\n Enter User ID : ";
@@ -778,14 +711,120 @@ void Bank::delete_user()
         vector<Record> records = readCSV(fileName);
         if (!recordExists(a_id, records)) {
             cout<<"\n\n\t\t User not found with ID " << a_id;
-            getch();
-            goto p;
+            edit();
+        }else{
+            system("clear");
+            allInfoByID(fileName,a_id);
+            cout<<"\n\n\t\t Enter New Record";
+            int choice;
+            cout<<"\n\n 1. Name";
+            cout<<"\n 2. Address";
+            cout<<"\n 3. Pin";
+            cout<<"\n 4. Password";
+            cout<<"\n 5. Phone";
+            cout<<"\n 6. Go Back";
+            cout<<"\n\n Enter Your Choice : ";
+            cin>>choice;
+            int new_pin=0;
+            string new_name="",new_pass="",new_address="",new_phone="";
+            switch(choice)
+            {
+                case 1:
+                    cout<<"\n\n\t\t Enter New Name : ";
+                    cin.ignore();
+                    getline (cin, new_name);
+                    if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                    {
+                        cout<<"\n\n\t\t Name Updated Successfully...";
+                        bank_management(1);
+                    }else{
+                        cout<<"\n\n\t\t Name Updated Failed...";
+                        edit();
+                    }
+                    break;
+                case 2:
+                    cout<<"\n\n\t\t Enter New Address : ";
+                    cin.ignore();
+                    getline (cin, new_address);
+                    if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                    {
+                        cout<<"\n\n\t\t Address Updated Successfully...";
+                        bank_management(1);
+                    }else{
+                        cout<<"\n\n\t\t Address Updated Failed...";
+                        edit();
+                    }
+                    break;
+                case 3:
+                    cout<<"\n\n\t\t Enter New Pin : ";
+                    cin>>new_pin;
+                    if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                    {
+                        cout<<"\n\n\t\t PIN Updated Successfully...";
+                        bank_management(1);
+                    }else{
+                        cout<<"\n\n\t\t PIN Updated Failed...";
+                        edit();
+                    }
+                    break;
+                case 4:
+                    cout<<"\n\n\t\t Enter New Password : ";
+                    cin>>new_pass;
+                    if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                    {
+                        cout<<"\n\n\t\t Password Updated Successfully...";
+                        bank_management(1);
+                    }else{
+                        cout<<"\n\n\t\t Password Updated Failed...";
+                        edit();
+                    }
+                    break;
+                case 5:
+                    cout<<"\n\n\t\t Enter New Phone : ";
+                    cin>>new_phone;
+                    if(updateRecord(fileName,{a_id,new_name,new_pin,new_pass,new_address,new_phone}))
+                    {
+                        cout<<"\n\n\t\t Phone Updated Successfully...";
+                        bank_management(1);
+                    }else{
+                        cout<<"\n\n\t\t Phone Updated Failed...";
+                        edit();
+                    }
+                    break;
+                case 6:
+                    bank_management();
+                    break;
+                default:
+                    cout<<"\n\n\t\t Invalid Value...Please Try Again";
+                    edit();
+            }
+        }
+    }
+}
+void Bank::delete_user()
+{
+    system("clear");
+    cout<<"\n\n\t\t\tDelete User Record";
+    if(!isFileOpen(fileName))
+    {
+        cout<<"\n\n\t\t File Not Found...";
+        delete_user();
+    }else{
+        int a_id;
+        cout<<"\n\n Enter User ID : ";
+        cin>>a_id;
+        vector<Record> records = readCSV(fileName);
+        if (!recordExists(a_id, records)) {
+            cout<<"\n\n\t\t User not found with ID " << a_id;
+            delete_user();
         }else{
             if(deleteRecord(fileName,a_id))
             {
                 cout<<"\n\n\t\t User Deleted Successfully...";
+                bank_management(1);
             }else{
                 cout<<"\n\n\t\t User Deleted Failed...";
+                delete_user();
             }
         }
     }
