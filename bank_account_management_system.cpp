@@ -7,7 +7,7 @@
 #include <ctime>
 #include <string>
 #include <unistd.h>
-#include <termios.h>
+//#include <termios.h>
 
 using namespace std;
 // char getch(void) {
@@ -85,9 +85,16 @@ void bank_history(int id,double amount,string type,string remarks="") {
         cout<<"\n\n File Not Found...";
     }else{
         // date and time
+        // time_t now = time(0);
+        // char* dt = ctime(&now);
+        // Get current time
         time_t now = time(0);
-        char* dt = ctime(&now);
-        file << id << "," << amount << "," << type << ","<<remarks<<","<< dt;
+        tm *ltm = localtime(&now);
+
+        // Format date as DD-MM-YYYY
+        char date[11]; // Buffer for formatted date
+        strftime(date, sizeof(date), "%d-%m-%Y", ltm);
+        file << id << "," << amount << "," << type << ","<<remarks<<","<< date;
         file.close();
     }
     file.close();
@@ -283,6 +290,8 @@ class Bank
         void search();
         void edit();
         void delete_user();
+        void show_all_records();
+        void payment_all_records(int cal_fun=0);
 
 };
 void Bank::menu()
@@ -300,7 +309,7 @@ void Bank::menu()
     cin>>choice;
     while (flag)
     {
-        
+
         switch(choice)
         {
             case 1:
@@ -346,13 +355,13 @@ void Bank::menu()
                 cout<<"\n\n Invalid Value...Please Try Again";
         }
     }
-   
-    
+
+
 }
 
 void Bank::bank_management(int cal_fun)
 {
-   
+
     if(cal_fun==0)
     {
         system("clear");
@@ -406,8 +415,10 @@ void Bank::bank_management(int cal_fun)
                 delete_user();
                 break;
             case 10:
+                show_all_records();
                 break;
             case 11:
+                payment_all_records();
                 break;
             case 12:
                 flag = false;
@@ -417,8 +428,8 @@ void Bank::bank_management(int cal_fun)
                 cout<<"\n\n Invalid Value...Please Try Again";
         }
     }
-    
-    
+
+
 }
 void Bank::atm_management()
 {
@@ -454,7 +465,7 @@ void Bank::atm_management()
 }
 void Bank::new_user()
 {
-    
+
     system("clear");
     cout<<"\n\n\t\t\tAdd New User";
     cout<<"\n\n User ID : ";
@@ -522,7 +533,7 @@ void Bank::new_user()
 
 }
 void Bank::already_user()
-{ 
+{
         system("clear");
         cout<<"\n\n\t\t\tAlready User";
         if(!isFileOpen(fileName))
@@ -539,7 +550,7 @@ void Bank::already_user()
                 cout<<"\n\n Record with ID " << a_id << " not found.";
                 already_user();
             }else{
-                
+
                 allInfoByID(fileName,a_id);
                 bank_management(1);
             }
@@ -574,7 +585,7 @@ void Bank::deposit()
 }
 void Bank::withdraw()
 {
-   
+
     system("clear");
     cout<<"\n\n\t\t\tWithdraw Amount";
     if(!isFileOpen(fileName))
@@ -826,6 +837,73 @@ void Bank::delete_user()
                 cout<<"\n\n\t\t User Deleted Failed...";
                 delete_user();
             }
+        }
+    }
+}
+void Bank::show_all_records()
+{
+    system("clear");
+    cout<<"\n\n\t\t\tAll User Records";
+    vector<Record> records = readCSV(fileName);
+    if(records.size() ==0)
+    {
+        cout<<"\n\n\t\t No Record Found...";
+        bank_management();
+    }else{
+        for (const auto& record : records) {
+            cout << "\n\nID :"<<record.id <<"  Name :"<<record.name<<"  Pin :"<<record.pin<<"  Password :"<<record.pass<<"  Address :"<<record.address<<"  Phone :"<<record.phone<<"   Balance :"<<record.balance<<endl;
+        }
+        bank_management(1);
+    }
+}
+
+void Bank::payment_all_records(int cal_fun)
+{
+    if(cal_fun==0)
+    {
+        system("clear");
+    }
+    // payment history by user id
+    cout<<"\n\n\t Please Enter User ID : ";
+    int user_id;
+    cin>>user_id;
+    // check user id exist or not
+    vector<Record> records = readCSV(fileName);
+    if (!recordExists(user_id, records)) {
+        cout<<"\n\n\t\t User not found with ID " << user_id;
+        payment_all_records(1);
+    }else{
+        system("clear");
+        cout<<"\n\n\t\t\tPayment History By User ID : "<<user_id<<endl;
+        ifstream file("history.csv");
+        if(!file)
+        {
+            cout<<"\n\n File Not Found...";
+            bank_management(1);
+        }else{
+            string line;
+            while (getline(file, line))
+            {
+                if(line.find(to_string(user_id)) != string::npos)
+                {
+                    // show only type and balance and date format d-m-y
+                    // cout<<line<<endl;
+                    // cout<<line<<endl;
+                    stringstream ss(line);
+                    string id, type, balance, date,remarks;
+
+                    // Assuming data format: user_id,type,balance,date (YYYY-MM-DD)
+                    getline(ss, id, ',');
+                    getline(ss, balance, ',');
+                    getline(ss, type, ',');
+                    getline(ss, remarks, ',');
+                    getline(ss, date, ',');
+                    // Output only required fields
+                    cout << "Type: " << type << ", Balance: " << balance << ", Date: " << date << endl;
+                }
+            }
+            file.close();
+            bank_management(1);
         }
     }
 }
