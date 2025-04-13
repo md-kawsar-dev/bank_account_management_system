@@ -2,8 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-//#include <conio.h>
-//#include <windows.h>
+#include <conio.h>
+#include <windows.h>
 #include <ctime>
 #include <string>
 #include <unistd.h>
@@ -21,7 +21,7 @@ using namespace std;
 //     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);  // Restore terminal settings
 //     return ch;
 // }
-
+char ch;
 struct Record {
     int id;
     string name;
@@ -35,9 +35,9 @@ bool isFileOpen(const string& filename) {
     return file.is_open();
 }
 // Function to check if a record exists
-bool recordExists(const int& id, const vector<Record>& records) {
+bool recordExists(const int& id, const vector<Record>& records,const int& pin=0) {
     for (const auto& record : records) {
-        if (record.id == id) {
+        if (record.id == id && (pin==0 || record.pin==pin)) {
             return true;
         }
     }
@@ -284,7 +284,7 @@ class Bank
         void new_user();
         void already_user();
         void deposit();
-        void withdraw();
+        void withdraw(string from="");
         void transfer();
         void payment();
         void search();
@@ -298,7 +298,6 @@ void Bank::menu()
 {
     system("clear");
     int choice;
-    char ch;
     bool flag = true;
     string email,pin,pass;
     cout<<"\n\n\t\t\tControl Panel";
@@ -446,8 +445,43 @@ void Bank::atm_management()
     switch(choice)
     {
         case 1:
+            system("clear");
+            int id,pin;
+            cout<<"\n\n\t\t\tATM Login";
+            cout<<"\n\n User ID : ";
+            cin>>id;
+            cout<<"\n\n\t\t Pin Code : ";
+            for(int i=1;i<=5;i++)
+            {
+                ch = getch();
+                pin +=ch;
+                cout<<"*";
+            }
+            // cout<<pin<<endl;
+            // check user id and pin code
+            vector<Record> records = readCSV(fileName);
+            if(!recordExists(id,records,pin))
+            {
+                cout<<"\n\n\t\t User ID or Pin Code is wrong...";
+                sleep(2);
+                atm_management();
+            }else{
+                cout<<"\n\n\t\t User ID and Pin Code is correct...";
+                sleep(5);
+                // check balance
+                vector<Record> records = readCSV(fileName);
+                for (const auto& record : records) {
+                    if (record.id == id && record.pin == pin) {
+                        cout << "\n\n\t\t Your Current Balance is : " << record.balance << endl;
+                        break;
+                    }
+                }
+            }
+            
+
             break;
         case 2:
+            withdraw("atm");
             break;
         case 3:
             break;
@@ -583,7 +617,7 @@ void Bank::deposit()
         }
     }
 }
-void Bank::withdraw()
+void Bank::withdraw(string from)
 {
 
     system("clear");
@@ -607,7 +641,16 @@ void Bank::withdraw()
             if(withdrawBalance(fileName,a_id,amount))
             {
                 cout << "\n\nWithdraw successfully to ID " << a_id << "!";
-                bank_management(1);
+                if(from=="atm")
+                {
+                    cout<<"\n\n\t\t Thank You... \n\n";
+                    sleep(2);
+                    atm_management();
+                }else{
+                    sleep(2);
+                    cout<<"\n\n\t\t Thank You... \n\n";
+                    bank_management(1);
+                }
             }else{
                 cout << "\n\nWithdraw failed to ID " << a_id << "!";
                 withdraw();
