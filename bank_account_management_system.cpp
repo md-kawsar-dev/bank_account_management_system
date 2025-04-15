@@ -7,7 +7,7 @@
 #include <ctime>
 #include <string>
 #include <unistd.h>
-//#include <termios.h>
+// #include <termios.h>
 
 using namespace std;
 // char getch(void) {
@@ -35,9 +35,9 @@ bool isFileOpen(const string& filename) {
     return file.is_open();
 }
 // Function to check if a record exists
-bool recordExists(const int& id, const vector<Record>& records,const int& pin=0) {
+bool recordExists(const int& id, const vector<Record>& records, const string& pin="") {
     for (const auto& record : records) {
-        if (record.id == id && (pin==0 || record.pin==pin)) {
+        if (record.id == id && (pin=="" || record.pin==stoi(pin))) {
             return true;
         }
     }
@@ -275,7 +275,7 @@ class Bank
     private:
         int pin,id;
         float balance;
-        string pass,name,fname,address,phone,fileName="bank.csv";
+        string pass,name,fname,address,phone,fileName="bank.csv",pinCode;
 
     public:
         void menu();
@@ -343,8 +343,28 @@ void Bank::menu()
                 bank_management();
                 break;
             case 2:
-                atm_management();
-                break;
+                {
+                    system("clear");
+                    cout<<"\n\n\t\t\tATM Management System";
+                    cout<<"\n\n\t\t\tLogin Account";
+                    cout<<"\n\n Account No. : ";
+                    cin>>id;
+                    cout<<"\n\n\t\t Pin Code : ";
+                    for(int i=1;i<=5;i++)
+                    {
+                        ch = getch();
+                        pinCode +=ch;
+                        cout<<"*";
+                    }
+                    vector<Record> records = readCSV(fileName);
+                    if(!recordExists(id, records, pin)) {
+                        cout << "\n\n\t\t User ID or Pin Code is wrong...";
+                        sleep(2);
+                    }else{
+                        atm_management();
+                    }
+                    break;
+                }
             case 3:
                 flag = false;
                 cout<<"\n\n\t\t Thank You... \n\n";
@@ -432,7 +452,7 @@ void Bank::bank_management(int cal_fun)
 }
 void Bank::atm_management()
 {
-    p:
+ 
     system("clear");
     int choice;
     cout<<"\n\n\t\t\tATM Management System";
@@ -444,42 +464,21 @@ void Bank::atm_management()
     cin>>choice;
     switch(choice)
     {
-        case 1:
+        case 1: {
             system("clear");
-            int id,pin;
-            cout<<"\n\n\t\t\tATM Login";
-            cout<<"\n\n User ID : ";
-            cin>>id;
-            cout<<"\n\n\t\t Pin Code : ";
-            for(int i=1;i<=5;i++)
-            {
-                ch = getch();
-                pin +=ch;
-                cout<<"*";
-            }
-            // cout<<pin<<endl;
-            // check user id and pin code
             vector<Record> records = readCSV(fileName);
-            if(!recordExists(id,records,pin))
-            {
-                cout<<"\n\n\t\t User ID or Pin Code is wrong...";
-                sleep(2);
-                atm_management();
-            }else{
-                cout<<"\n\n\t\t User ID and Pin Code is correct...";
-                sleep(5);
-                // check balance
-                vector<Record> records = readCSV(fileName);
-                for (const auto& record : records) {
-                    if (record.id == id && record.pin == pin) {
-                        cout << "\n\n\t\t Your Current Balance is : " << record.balance << endl;
-                        break;
-                    }
+            float balance =0;
+            for (const auto& record : records) {
+                if (record.id == id) {
+                    balance = record.balance;
+                    break;
                 }
             }
-            
-
+            cout << "\n\n\t\t Current Balance : " << balance;
+            sleep(3);
+            atm_management();
             break;
+        }
         case 2:
             withdraw("atm");
             break;
@@ -491,11 +490,7 @@ void Bank::atm_management()
         default:
             cout<<"\n\n Invalid Value...Please Try Again";
     }
-    // getch();
-    // goto p;
-    char c;
-    cin.get(c);
-    if(c == '\n')goto p;
+    
 }
 void Bank::new_user()
 {
