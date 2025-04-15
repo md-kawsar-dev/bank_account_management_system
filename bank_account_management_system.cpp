@@ -284,7 +284,7 @@ class Bank
         void new_user();
         void already_user();
         void deposit();
-        void withdraw(string from="");
+        void withdraw(string from="",int id,double amount=0);
         void transfer();
         void payment();
         void search();
@@ -416,8 +416,30 @@ void Bank::bank_management(int cal_fun)
                 deposit();
                 break;
             case 4:
-                withdraw();
-                break;
+                {
+                    system("clear");
+                    cout<<"\n\n\t\t\tWithdraw Amount";
+                    if(!isFileOpen(fileName))
+                    {
+                        cout<<"\n\n File Not Found...";
+                        bank_management();
+                    }else{
+                        int a_id;
+                        double amount;
+                        cout<<"\n\n Enter User ID : ";
+                        cin>>a_id;
+                        vector<Record> records = readCSV(fileName);
+                        if (!recordExists(a_id, records)) {
+                            cout<<"\n\n Record with ID " << a_id << " not found.";
+                            bank_management();
+                        }else{
+                            cout<<"\n\n Enter Withdraw Amount : ";
+                            cin>>amount;
+                           withdraw("bank",a_id,amount);
+                        }
+                    }
+                    break;
+                }
             case 5:
                 transfer();
                 break;
@@ -480,7 +502,11 @@ void Bank::atm_management()
             break;
         }
         case 2:
-            withdraw("atm");
+            system("clear");
+            double amount;
+            cout<<"\n\n Enter Withdraw Amount : ";
+            cin>>amount;
+            withdraw("atm",id,amount);
             break;
         case 3:
             break;
@@ -612,45 +638,26 @@ void Bank::deposit()
         }
     }
 }
-void Bank::withdraw(string from)
+void Bank::withdraw(string from,int id,double amount)
 {
 
     system("clear");
-    cout<<"\n\n\t\t\tWithdraw Amount";
-    if(!isFileOpen(fileName))
+    if(withdrawBalance(fileName,id,amount))
     {
-        cout<<"\n\n File Not Found...";
-        bank_management();
-    }else{
-        int a_id;
-        double amount;
-        cout<<"\n\n Enter User ID : ";
-        cin>>a_id;
-        vector<Record> records = readCSV(fileName);
-        if (!recordExists(a_id, records)) {
-            cout<<"\n\n Record with ID " << a_id << " not found.";
-            withdraw();
+        cout << "\n\nWithdraw successfully to ID " << a_id << "!";
+        if(from=="atm")
+        {
+            cout<<"\n\n\t\t Thank You... \n\n";
+            sleep(2);
+            atm_management();
         }else{
-            cout<<"\n\n Enter Withdraw Amount : ";
-            cin>>amount;
-            if(withdrawBalance(fileName,a_id,amount))
-            {
-                cout << "\n\nWithdraw successfully to ID " << a_id << "!";
-                if(from=="atm")
-                {
-                    cout<<"\n\n\t\t Thank You... \n\n";
-                    sleep(2);
-                    atm_management();
-                }else{
-                    sleep(2);
-                    cout<<"\n\n\t\t Thank You... \n\n";
-                    bank_management(1);
-                }
-            }else{
-                cout << "\n\nWithdraw failed to ID " << a_id << "!";
-                withdraw();
-            }
+            cout<<"\n\n\t\t Thank You... \n\n";
+            sleep(2);
+            bank_management(1);
         }
+    }else{
+        cout << "\n\nWithdraw failed to ID " << a_id << "!";
+        withdraw(from,id,amount);
     }
 }
 void Bank::transfer()
