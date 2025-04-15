@@ -284,7 +284,7 @@ class Bank
         void new_user();
         void already_user();
         void deposit();
-        void withdraw(string from="",int id,double amount=0);
+        void withdraw(string from="",int id=0,double amount=0);
         void transfer();
         void payment();
         void search();
@@ -644,7 +644,7 @@ void Bank::withdraw(string from,int id,double amount)
     system("clear");
     if(withdrawBalance(fileName,id,amount))
     {
-        cout << "\n\nWithdraw successfully to ID " << a_id << "!";
+        cout << "\n\nWithdraw successfully to ID " << id << "!";
         if(from=="atm")
         {
             cout<<"\n\n\t\t Thank You... \n\n";
@@ -656,7 +656,8 @@ void Bank::withdraw(string from,int id,double amount)
             bank_management(1);
         }
     }else{
-        cout << "\n\nWithdraw failed to ID " << a_id << "!";
+        cout << "\n\nWithdraw failed to ID " << id << "!";
+        sleep(2);
         withdraw(from,id,amount);
     }
 }
