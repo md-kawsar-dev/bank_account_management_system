@@ -157,6 +157,7 @@ void addBalance(const string& filename, int id, double amount) {
         cout << "\n\nBalance added successfully to ID " << id << "!";
     }
 }
+
 // Function to add balance to a record
 bool withdrawBalance(const string& filename, int id, double amount) {
     vector<Record> records = readCSV(filename);
@@ -285,7 +286,7 @@ class Bank
         void already_user();
         void deposit(string from,int id=0,double amount=0);
         void withdraw(string from="",int id=0,double amount=0);
-        void transfer();
+        void transfer(string from="",int id=0,double amount=0,int to_id=0);
         void payment();
         void search();
         void edit();
@@ -377,14 +378,48 @@ void Bank::menu()
 
 
 }
-
+void callatm_bank(string from)
+{
+    Bank b;
+    if(from=="atm")
+    {
+        b.atm_management();
+    }else{
+        b.bank_management();
+    }
+}
+void callReturn(string from)
+{
+    Bank b;
+    // if press enter go to atm management
+    cout<<"\n\n Press Enter to go back...";
+    cin.ignore();
+    cin.get(ch);
+    if(ch=='\n')
+    {
+        if(from=="atm")
+        {
+            b.atm_management();
+        }else{
+            b.bank_management(1);
+        }
+    }
+    else
+    {
+        cout<<"\n\n Invalid Value...Please Try Again";
+        if(from=="atm")
+        {
+            b.atm_management();
+        }else{
+            b.bank_management(1);
+        }
+    }
+    
+}
 void Bank::bank_management(int cal_fun)
 {
 
-    if(cal_fun==0)
-    {
-        system("clear");
-    }
+    system("clear");
     int choice;
     bool flag = true;
     cout<<"\n\n\t\t\tBank Management System";
@@ -433,6 +468,20 @@ void Bank::bank_management(int cal_fun)
                             cout<<"\n\n Enter Deposit Amount : ";
                             cin>>amount;
                             deposit("bank",a_id,amount);
+                            cout<<"\n\n\t\t Thank You... \n\n"; 
+                            sleep(2);
+                            cout<<"\n\n Press Enter to go back...";
+                            cin.ignore();
+                            cin.get(ch);
+                            if(ch=='\n')
+                            {
+                                bank_management(1);
+                            }
+                            else
+                            {
+                                cout<<"\n\n Invalid Value...Please Try Again";
+                                bank_management(1);
+                            }
                         }
                     }
                     break;
@@ -463,8 +512,29 @@ void Bank::bank_management(int cal_fun)
                     break;
                 }
             case 5:
-                transfer();
-                break;
+                {
+                    system("clear");
+                    cout<<"\n\n\t\t\tTransfer Amount";
+                    if(!isFileOpen(fileName))
+                    {
+                        cout<<"\n\n File Not Found...";
+                        callatm_bank("bank");
+                    }else{
+                        int from_id,to_id;
+                        double amount;
+                        cout<<"\n\n Enter From Account No : ";
+                        cin>>from_id;
+                        cout<<"\n\n Enter To Account No : ";
+                        cin>>to_id;
+                        cout<<"\n\n Enter Transfer Amount : ";
+                        cin>>amount;
+                        transfer("bank",from_id,amount,to_id);
+                        cout<<"\n\n\t\t Thank You... \n\n";
+                        sleep(2);
+                        callReturn("bank");
+                    }
+                    break;
+                }
             case 6:
                 payment();
                 break;
@@ -546,19 +616,7 @@ void Bank::atm_management()
                 }
                 cout<<"\n\n\t\t Thank You... \n\n";
                 sleep(2);
-                // if press enter go to atm management
-                cout<<"\n\n Press Enter to go back...";
-                cin.ignore();
-                cin.get(ch);
-                if(ch=='\n')
-                {
-                    atm_management();
-                }
-                else
-                {
-                    cout<<"\n\n Invalid Value...Please Try Again";
-                    atm_management();
-                }
+                callReturn("atm");
                 break;
             }
         case 4:
@@ -568,6 +626,10 @@ void Bank::atm_management()
                 cout<<"\n\n Enter Deposit Amount : ";
                 cin>>amount;
                 deposit("atm", id, amount);
+                cout<<"\n\n\t\t Thank You... \n\n";
+                sleep(2);
+                // if press enter go to atm management
+                callReturn("atm");
                 break;
             }
         case 5:
@@ -576,7 +638,14 @@ void Bank::atm_management()
                 double amount;
                 cout<<"\n\n Enter Transfer Amount : ";
                 cin>>amount;
-                transfer("atm", id, amount);
+                cout<<"\n\n Enter To Account No : ";
+                int to_id;
+                cin >> to_id; // Added input for to_id
+                transfer("atm", id, amount, to_id); // Uncommented transfer function with to_id
+                cout<<"\n\n\t\t Thank You... \n\n";
+                sleep(2);
+                // if press enter go to atm management
+                callReturn("atm");
                 break;
             }
         case 6:
@@ -734,38 +803,29 @@ void Bank::withdraw(string from,int id,double amount)
         }
     }
 }
-void Bank::transfer()
+void Bank::transfer(string from,int id,double amount,int to_id)
 {
     system("clear");
     cout<<"\n\n\t\t\tTransfer Amount";
     if(!isFileOpen(fileName))
     {
         cout<<"\n\n File Not Found...";
-        transfer();
+        callatm_bank(from);
     }else{
-        int from_id,to_id;
-        double amount;
-        cout<<"\n\n Enter From Account No : ";
-        cin>>from_id;
-        cout<<"\n\n Enter To Account No : ";
-        cin>>to_id;
+       
         vector<Record> records = readCSV(fileName);
-        if (!recordExists(from_id, records)) {
-            cout<<"\n\n Record with ID " << from_id << " not found.";
-            transfer();
+        if (!recordExists(id, records)) {
+            cout<<"\n\n Record with ID " << id << " not found.";
+            callatm_bank(from);
         }else if (!recordExists(to_id, records)) {
             cout<<"\n\n Record with ID " << to_id << " not found.";
-            transfer();
+            callatm_bank(from);
         }else{
-            cout<<"\n\n Enter Transfer Amount : ";
-            cin>>amount;
-            if(transferBalance(fileName,from_id,to_id,amount))
+            if(transferBalance(fileName,id,to_id,amount)) // corrected from from_id to id
             {
-                cout << "\n\nTransfer successfully from ID " << from_id << " to ID " << to_id << "!";
-                bank_management(1);
+                cout << "\n\nTransfer successfully from ID " << id << " to ID " << to_id << " Amount : " << amount << "!";
             }else{
-                cout << "\n\nTransfer failed from ID " << from_id << " to ID " << to_id << "!";
-                transfer();
+                cout << "\n\nTransfer failed from ID " << id << " to ID " << to_id << "!";
             }
         }
     }
